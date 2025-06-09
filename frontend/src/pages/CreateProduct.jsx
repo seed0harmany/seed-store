@@ -13,6 +13,7 @@ const CreateProduct = () => {
   });
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // NEW
 
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
@@ -20,22 +21,37 @@ const CreateProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!product.name || !product.price) {
       setError('Name and price are required.');
       return;
     }
 
     try {
-      await axios.post('http://localhost:5100/api/products', product);
-      navigate('/'); // Redirect to home
+      setError('');
+      setLoading(true);  // start loading
+
+      const newProduct = {
+        ...product,
+        price: parseFloat(product.price).toFixed(2)
+      };
+
+      await axios.post('http://localhost:5100/api/products', newProduct);
+
+      // Wait 1 second before navigation
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+
     } catch (err) {
       setError('Failed to create product.');
       console.error(err);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-4" style={{maxWidth:'500px'}}>
+    <div className="container" style={{ maxWidth: '500px', paddingTop: '5.5em'}}>
       <h2 className='text-center'>Create Product</h2>
 
       {error && <div className="alert alert-danger">{error}</div>}
@@ -50,6 +66,7 @@ const CreateProduct = () => {
             value={product.name}
             onChange={handleChange}
             required
+            disabled={loading} // disable input when loading
           />
         </div>
 
@@ -62,6 +79,7 @@ const CreateProduct = () => {
             value={product.price}
             onChange={handleChange}
             required
+            disabled={loading}
           />
         </div>
 
@@ -73,6 +91,7 @@ const CreateProduct = () => {
             name="image"
             value={product.image}
             onChange={handleChange}
+            disabled={loading}
           />
         </div>
 
@@ -84,11 +103,19 @@ const CreateProduct = () => {
             rows="3"
             value={product.description}
             onChange={handleChange}
+            disabled={loading}
           />
         </div>
 
-        <button type="submit" className="btn btn-success d-block m-auto">
-          Save Product
+        <button type="submit" className="btn btn-success d-block m-auto" disabled={loading}>
+          {loading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Saving...
+            </>
+          ) : (
+            'Save Product'
+          )}
         </button>
       </form>
     </div>
